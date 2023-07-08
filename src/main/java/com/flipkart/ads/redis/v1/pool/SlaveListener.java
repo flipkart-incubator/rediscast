@@ -13,6 +13,13 @@ import java.util.function.Function;
 
 @Slf4j
 public class SlaveListener extends Thread {
+    private final static String POSITIVE_SDOWN = "+sdown";
+    private final static String NEGATIVE_SDOWN = "-sdown";
+    private final static String NEGATIVE_ODOWN = "-odown";
+    private final static String POSTIVE_ODOWN = "+odown";
+    private final static String POSTIVE_SLAVE = "+slave";
+    private final static String POSITIVE_RESET_MASTER = "+reset-master";
+    private final static String POSITIVE_SWITCH_MASTER = "+switch-master";
     protected final String masterName;
     protected final String host;
     protected final int port;
@@ -40,11 +47,12 @@ public class SlaveListener extends Thread {
             jedis = new Jedis(host, port);
             try {
                 jedis.subscribe(new JedisPubSub() {
-                    @Override
-                    public void onMessage(String channel, String message) {
-                        processMessage(channel, message);
-                    }
-                }, "+sdown", "-sdown", "+reset-master", "+switch-master", "+odown", "-odown", "+slave");
+                                    @Override
+                                    public void onMessage(String channel, String message) {
+                                        processMessage(channel, message);
+                                    }
+                                }, POSITIVE_SDOWN, NEGATIVE_SDOWN, POSITIVE_RESET_MASTER, POSITIVE_SWITCH_MASTER, POSTIVE_ODOWN,
+                        NEGATIVE_ODOWN, POSTIVE_SLAVE);
             } catch (JedisConnectionException e) {
                 log.error("Lost connection to Sentinel at {} : {} due to {}", host, port, e);
                 if (running.get()) {
@@ -93,14 +101,14 @@ public class SlaveListener extends Thread {
         // Sample slave message: +sdown slave Ip:Port Ip Port @ masterName MasterIp MasterPort
         String[] slaveMsg = message.split(" ");
         switch (channel) {
-            case "+switch-master":
+            case POSITIVE_SWITCH_MASTER:
                 return slaveMsg[0];
-            case "+slave":
-            case "+sdown":
-            case "-sdown":
-            case "+odown":
-            case "-odown":
-            case "+reset-master":
+            case POSTIVE_SLAVE:
+            case POSITIVE_SDOWN:
+            case NEGATIVE_SDOWN:
+            case POSTIVE_ODOWN:
+            case NEGATIVE_ODOWN:
+            case POSITIVE_RESET_MASTER:
                 return slaveMsg[slaveMsg.length - 3];
             default:
                 return null;
@@ -110,11 +118,11 @@ public class SlaveListener extends Thread {
     private String fetchRole(String channel, String message) {
         String[] slaveMsg = message.split(" ");
         switch (channel) {
-            case "+slave":
-            case "+sdown":
-            case "-sdown":
-            case "+odown":
-            case "-odown":
+            case POSTIVE_SLAVE:
+            case POSITIVE_SDOWN:
+            case NEGATIVE_SDOWN:
+            case POSTIVE_ODOWN:
+            case NEGATIVE_ODOWN:
                 return slaveMsg[0];
             default:
                 return "master";

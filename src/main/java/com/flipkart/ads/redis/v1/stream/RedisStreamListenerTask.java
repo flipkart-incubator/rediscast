@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class RedisStreamListenerTask implements Runnable {
-    private static final String IS_PARALLEL_PROCESSING_ON_STREAM_BATCH_ENABLED = "is_parallel_process_on_stream_batch_enabled";
     private final String mapName;
     private final RedisStreamListener changeListener;
     private final RedisDataStoreChangePropagator<String, Object> changePropagator;
@@ -53,13 +52,13 @@ public class RedisStreamListenerTask implements Runnable {
             List<StreamEvent<String, Object>> changeEvents = changeListener.nextBatch();
             log.debug("Got batch for mapName: {}, found: {} records in batch.", mapName, changeEvents.size());
 
-            try (Timer.Context context = batchProcessEvent.time()) {
+            try (Timer.Context ignored = batchProcessEvent.time()) {
                 // Sort and map construction to remove duplicate events in a batch
                 // Consider latest event for a entity at a batch level
                 Map<String, List<StreamEvent<String, Object>>> uniqStreams = changeEvents.stream().collect(Collectors.groupingBy(RedisEntity::getKey));
 
-                // TODO: Uday include it as a config
-                Boolean isParallelProcessingOnStreamBatchEnabled = true;
+                // TODO: Make it as a config
+                boolean isParallelProcessingOnStreamBatchEnabled = true;
                 if (isParallelProcessingOnStreamBatchEnabled) {
                     log.info("Doing Parallel Stream on Data from Redis Stream Batch");
                     uniqStreams.values().parallelStream().forEach(e ->
@@ -75,7 +74,7 @@ public class RedisStreamListenerTask implements Runnable {
                                     }));
                 } else {
                     log.info("Doing Serial Stream on Data from Redis Stream Batch");
-                    uniqStreams.values().stream().forEach(e ->
+                    uniqStreams.values().forEach(e ->
                             e.stream().sorted(Comparator.comparingLong(RedisEntity::getEventTime))
                                     .collect(Collectors.toList()).forEach(r -> {
                                         try {

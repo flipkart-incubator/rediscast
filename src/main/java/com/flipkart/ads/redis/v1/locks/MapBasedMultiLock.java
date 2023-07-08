@@ -10,7 +10,7 @@ import java.util.concurrent.locks.LockSupport;
 
 @Slf4j
 public class MapBasedMultiLock implements MultiLock {
-    private final Map<Object, AtomicBoolean> locks = new ConcurrentHashMap();
+    private final Map<Object, AtomicBoolean> locks = new ConcurrentHashMap<>();
     private final boolean ACQUIRED_LOCK_STATE = true;
     private final long RETRY_AFTER_IN_NANO = 100L;
 

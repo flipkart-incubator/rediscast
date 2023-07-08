@@ -170,7 +170,7 @@ public class RedisDataStoreCDCImpl implements RedisDataStoreCDC {
     }
 
     @Override
-    public boolean stop() throws RedisDataStoreException {
+    public boolean stop() {
         try {
             log.info("Stopping redis datastore client");
             runningTasks.keySet().forEach(this::cancelRunningTask);
