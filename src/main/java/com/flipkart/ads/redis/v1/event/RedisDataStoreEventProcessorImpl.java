@@ -37,7 +37,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
     private final AtomicBoolean initialised = new AtomicBoolean(false);
     private final String mapName;
     private final MetricRegistry metricRegistry;
-    private final RedisDataStoreCDC ingestionDataStoreReadOnlyClient;
+    private final RedisDataStoreCDC redisCDCClient;
     private final RedisDataStoreChangePropagator<String, Object> externalChangePropagator;
     private final MultiLock multiLock;
     private final RedisInMemoryMap versionMap;
@@ -48,29 +48,29 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
     private String listenerId;
 
 
-    public RedisDataStoreEventProcessorImpl(RedisDataStoreCDC ingestionDataStoreReadOnlyClient,
+    public RedisDataStoreEventProcessorImpl(RedisDataStoreCDC redisCDCClient,
                                             RedisDataStoreChangePropagator<String, Object> externalChangePropagator,
                                             String mapName, int stripes, MetricRegistry metricRegistry, BootstrapConfig bootstrapConfig) {
 
-        this(ingestionDataStoreReadOnlyClient, externalChangePropagator, mapName, metricRegistry,
+        this(redisCDCClient, externalChangePropagator, mapName, metricRegistry,
                 new StripedMultiLock(stripes, false), bootstrapConfig);
 
     }
 
 
-    public RedisDataStoreEventProcessorImpl(RedisDataStoreCDC ingestionDataStoreReadOnlyClient,
+    public RedisDataStoreEventProcessorImpl(RedisDataStoreCDC redisCDCClient,
                                             RedisDataStoreChangePropagator<String, Object> externalChangePropagator,
                                             String mapName, MetricRegistry metricRegistry, BootstrapConfig bootstrapConfig) {
 
-        this(ingestionDataStoreReadOnlyClient, externalChangePropagator, mapName, metricRegistry, new MapBasedMultiLock(), bootstrapConfig);
+        this(redisCDCClient, externalChangePropagator, mapName, metricRegistry, new MapBasedMultiLock(), bootstrapConfig);
     }
 
-    protected RedisDataStoreEventProcessorImpl(RedisDataStoreCDC ingestionDataStoreReadOnlyClient,
+    protected RedisDataStoreEventProcessorImpl(RedisDataStoreCDC redisCDCClient,
                                                RedisDataStoreChangePropagator<String, Object> externalChangePropagator,
                                                String mapName, MetricRegistry metricRegistry, MultiLock multiLock, BootstrapConfig bootstrapConfig) {
         this.mapName = mapName;
         this.metricRegistry = metricRegistry;
-        this.ingestionDataStoreReadOnlyClient = ingestionDataStoreReadOnlyClient;
+        this.redisCDCClient = redisCDCClient;
         this.externalChangePropagator = externalChangePropagator;
         this.changePropagationDelay = metricRegistry.timer(name(RedisDataStoreEventProcessorImpl.class, this.mapName, CHANGE_PROPAGATION_DELAY));
         this.versionMap = new RedisInMemoryMap(RedisInMemoryMap.RedisLocalMapType.MINIMAL_DATA_MAP, mapName);
@@ -85,7 +85,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
         initialised.compareAndSet(true, false);
         // @todo: handle on the fly re-initialisation by stopping the listeners.
         try (Timer.Context ignored = getEventProcessorTimer(mapName, "init").time()) {
-            listenerId = ingestionDataStoreReadOnlyClient.addListener(mapName, this);
+            listenerId = redisCDCClient.addListener(mapName, this);
             if (bootstrapConfig != null) {
                 incrementalFullScan();
             } else {
@@ -102,13 +102,13 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
     private void fullScan() throws RedisDataStoreException {
         try (Timer.Context ignored = getEventProcessorTimer(this.mapName, "fullScan").time()) {
             log.info("Starting single shot full scan of mapName {} ", mapName);
-            Set<String> keySet = ingestionDataStoreReadOnlyClient.keySet(mapName);
+            Set<String> keySet = redisCDCClient.keySet(mapName);
             for (List<String> keys : Iterables.partition(keySet, bootstrapConfig.getBatchSize())) {
                 Map<String, RedisEntity<String, Object>> storeData = new HashMap<>();
                 int retry = 3;
                 while (retry > 0) {
                     try {
-                        storeData.putAll(ingestionDataStoreReadOnlyClient.getBatch(mapName, new LinkedHashSet<>(keys)));
+                        storeData.putAll(redisCDCClient.getBatch(mapName, new LinkedHashSet<>(keys)));
                         retry = 0;
                     } catch (RedisDataStoreException e) {
                         log.error("Error while fetching batch data {}", this.mapName, e);
@@ -125,7 +125,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
         try (Timer.Context ignored = getEventProcessorTimer(this.mapName, "incrementalFullScan").time()) {
             log.error("Starting Redis Event Processor incremental full scan of mapName {} ", mapName);
             ExecutorService executorService = new ThreadPoolExecutor(bootstrapConfig.getCorePoolSize(), bootstrapConfig.getMaxPoolSize(), 10000L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-            Set<String> keys = ingestionDataStoreReadOnlyClient.keySet(mapName);
+            Set<String> keys = redisCDCClient.keySet(mapName);
             if (CollectionUtils.isNotEmpty(keys)) {
                 final List<Future<?>> futures = submitScanTasks(executorService, keys);
                 for (Future<?> future : futures) future.get();
@@ -143,7 +143,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
             List<Future<?>> futures = new ArrayList<>();
             int batch = 0;
             for (List<String> keys : Iterables.partition(keySet, bootstrapConfig.getBatchSize())) {
-                futures.add(executorService.submit(new RedisDataStoreBatchProcessorTask(dataStoreEventProcessor, multiLock, mapName, ingestionDataStoreReadOnlyClient, new LinkedHashSet<>(keys), ++batch, metricRegistry)));
+                futures.add(executorService.submit(new RedisDataStoreBatchProcessorTask(dataStoreEventProcessor, multiLock, mapName, redisCDCClient, new LinkedHashSet<>(keys), ++batch, metricRegistry)));
             }
             return futures;
         } catch (Exception e) {
@@ -243,7 +243,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
     @Override
     public void close() throws IOException {
         try {
-            ingestionDataStoreReadOnlyClient.removeListener(listenerId);
+            redisCDCClient.removeListener(listenerId);
         } catch (RedisDataStoreChangePropagatorException e) {
             log.error("Error while stopping listener for mapName: {} ", mapName, e);
             throw new IOException("Error while stopping listener for mapName:" + mapName, e);
@@ -261,7 +261,7 @@ public class RedisDataStoreEventProcessorImpl implements RedisDataStoreEventProc
 
     private Object getValueFromKVStore(String key, long eventTime) throws RedisDataStoreChangePropagatorException {
         try (Timer.Context ignored = getEventProcessorTimer(mapName, "kvGet").time()) {
-            RedisEntity<String, Object> redisEntity = ingestionDataStoreReadOnlyClient.get(mapName, key, eventTime);
+            RedisEntity<String, Object> redisEntity = redisCDCClient.get(mapName, key, eventTime);
             return redisEntity != null ? redisEntity.getValue() : null;
         } catch (RedisDataStoreException e) {
             kvGetException.mark();

@@ -8,8 +8,8 @@ import com.flipkart.ads.redis.v1.client.*;
 import com.flipkart.ads.redis.v1.datastore.DataStore;
 import com.flipkart.ads.redis.v1.event.RedisDataStoreChangePropagator;
 import com.flipkart.ads.redis.v1.handler.RedisStoreHandler;
-import com.flipkart.ads.redis.v1.ingestion.stategy.RedisInitialisationStrategy;
-import com.flipkart.ads.redis.v1.ingestion.stategy.RedisStoreCacheInitialisationStrategy;
+import com.flipkart.ads.redis.v1.initialiser.strategy.RedisInitialisationStrategy;
+import com.flipkart.ads.redis.v1.initialiser.strategy.RedisStoreCacheInitialisationStrategy;
 import com.flipkart.ads.redis.v1.model.RedisMap;
 import com.flipkart.ads.redis.v1.pool.JedisSlavePool;
 import com.flipkart.ads.redis.v1.pool.RedisPoolConfig;
@@ -61,7 +61,7 @@ public class RedisStoreModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public RedisDataStoreCDC getIngestionClient(MetricRegistry metricRegistry,
+    public RedisDataStoreCDC getRedisCDCClient(MetricRegistry metricRegistry,
                                                 @Named("redis_read_only_client") RedisReadOnlyClient redisReadOnlyClient,
                                                 @Named("redisCacheScheduler") ScheduledExecutorService executorService) {
         return new RedisDataStoreCDCImpl(metricRegistry, redisReadOnlyClient, executorService);
@@ -102,7 +102,7 @@ public class RedisStoreModule extends AbstractModule {
     @Provides
     @Singleton
     @Named("redis_slave_pool")
-    public JedisSlavePool getBannerMapJedisSlavePool(@Named("redis_stream_config") RedisPoolConfig redisStreamConfig) {
+    public JedisSlavePool getJedisSlavePool(@Named("redis_stream_config") RedisPoolConfig redisStreamConfig) {
         GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
         genericObjectPoolConfig.setMaxTotal(redisStreamConfig.getMaxThreads());
         genericObjectPoolConfig.setMaxWaitMillis(redisStreamConfig.getMaxWaitInMillis());

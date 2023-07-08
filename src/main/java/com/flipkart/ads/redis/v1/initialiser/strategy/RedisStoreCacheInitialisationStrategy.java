@@ -1,4 +1,4 @@
-package com.flipkart.ads.redis.v1.ingestion.stategy;
+package com.flipkart.ads.redis.v1.initialiser.strategy;
 
 import com.flipkart.ads.redis.v1.cache.RedisDataInMemoryCache;
 import com.flipkart.ads.redis.v1.datastore.DataStore;
@@ -10,11 +10,11 @@ import java.io.IOException;
 
 @Slf4j
 public class RedisStoreCacheInitialisationStrategy implements RedisInitialisationStrategy<RedisDataInMemoryCache> {
-    private final DataStore ingestionDataStore;
+    private final DataStore dataStore;
 
     @Inject
-    public RedisStoreCacheInitialisationStrategy(DataStore<?> ingestionDataStore) {
-        this.ingestionDataStore = ingestionDataStore;
+    public RedisStoreCacheInitialisationStrategy(DataStore<?> dataStore) {
+        this.dataStore = dataStore;
     }
 
     @Override
@@ -28,8 +28,8 @@ public class RedisStoreCacheInitialisationStrategy implements RedisInitialisatio
     }
 
     @Override
-    public void putInCache(RedisMap cacheName, RedisDataInMemoryCache ingestionDataStoreCache) {
-        ingestionDataStore.putCache(cacheName, ingestionDataStoreCache);
+    public void putInCache(RedisMap cacheName, RedisDataInMemoryCache redisDataStoreCache) {
+        dataStore.putCache(cacheName, redisDataStoreCache);
     }
 
     @Override

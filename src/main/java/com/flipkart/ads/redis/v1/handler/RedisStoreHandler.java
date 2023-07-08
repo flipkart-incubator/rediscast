@@ -24,27 +24,27 @@ import java.util.Map;
 
 @Slf4j
 public class RedisStoreHandler implements RedisDataStoreProvider, RedisCacheProvider {
-    private final Provider<RedisDataStoreCDC> redisSnapShotDataProviderProvider;
+    private final Provider<RedisDataStoreCDC> redisDataStoreProvider;
     private final Provider<Map<RedisMap, RedisDataStoreChangePropagator>> listenerProvider;
     private final Provider<Map<RedisMap, RedisEventProcessorConfig>> mapsToInitialise;
     private final DataStore<RedisDataInMemoryCache> redisDataStore;
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public RedisStoreHandler(Provider<RedisDataStoreCDC> redisSnapShotDataProviderProvider,
+    public RedisStoreHandler(Provider<RedisDataStoreCDC> redisDataStoreProvider,
                              Provider<Map<RedisMap, RedisEventProcessorConfig>> mapsToInitialise,
                              Provider<Map<RedisMap, RedisDataStoreChangePropagator>> listenerProvider,
                              MetricRegistry metricRegistry) {
         this.metricRegistry = metricRegistry;
         this.redisDataStore = new RedisDataStoreImpl();
         this.mapsToInitialise = mapsToInitialise;
-        this.redisSnapShotDataProviderProvider = redisSnapShotDataProviderProvider;
+        this.redisDataStoreProvider = redisDataStoreProvider;
         this.listenerProvider = listenerProvider;
     }
 
     @Override
     public Map<RedisMap, Object> provideCaches() {
-        RedisDataStoreCDC redisDataStoreCDC = redisSnapShotDataProviderProvider.get();
+        RedisDataStoreCDC redisDataStoreCDC = redisDataStoreProvider.get();
 
         Map<RedisMap, Object> caches = new LinkedHashMap<>();
 
@@ -80,8 +80,8 @@ public class RedisStoreHandler implements RedisDataStoreProvider, RedisCacheProv
         return redisDataStore;
     }
 
-    private Gauge<Long> getIngestionCacheSizeGauge(Object ingestionDataStoreCache, String mapName) {
-        return () -> provideSize(ingestionDataStoreCache, mapName);
+    private Gauge<Long> getCacheSizeGauge(Object redisDataStoreCache, String mapName) {
+        return () -> provideSize(redisDataStoreCache, mapName);
     }
 
     private Long provideSize(Object redisDataStoreCache, String mapName) {

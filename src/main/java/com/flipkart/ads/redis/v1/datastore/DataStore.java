@@ -17,5 +17,5 @@ public interface DataStore<CacheType> {
 
     boolean isDataStoreInitialised(RedisMap map);
 
-    void putCache(RedisMap cacheName, CacheType ingestionDataStoreCache);
+    void putCache(RedisMap cacheName, CacheType cacheObject);
 }

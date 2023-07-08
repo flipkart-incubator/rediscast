@@ -20,12 +20,12 @@ public class RedisDataStoreImpl implements DataStore<RedisDataInMemoryCache> {
     public <T> T get(RedisMap map, String key) {
         RedisDataInMemoryCache mapCache = inMemoryMapsCaches.get(map);
         if (mapCache == null) {
-            log.error("Error in reading from ingestion map:{}", map.getMapName());
+            log.error("Error in reading from in memory map cache:{}", map.getMapName());
         } else {
             try {
                 return mapCache.get(key);
             } catch (RedisInMemoryCacheException ex) {
-                log.error("Error in reading from ingestion map:{} for key: {}", map.getMapName(), key);
+                log.error("Error in reading from in memory map cache:{} for key: {}", map.getMapName(), key);
             }
         }
         return null;
@@ -35,12 +35,12 @@ public class RedisDataStoreImpl implements DataStore<RedisDataInMemoryCache> {
     public <T> Map<String, T> mGet(RedisMap map, List<String> keys) {
         RedisDataInMemoryCache mapCache = inMemoryMapsCaches.get(map);
         if (mapCache == null) {
-            log.error("Error in reading from ingestion map:{}", map.getMapName());
+            log.error("Error in reading from in memory map cache:{}", map.getMapName());
         } else {
             try {
                 return mapCache.mGet(keys);
             } catch (RedisInMemoryCacheException ex) {
-                log.error("Error in reading from ingestion map:{} for key: {}", map.getMapName(), keys);
+                log.error("Error in reading from in memory map cache:{} for key: {}", map.getMapName(), keys);
             }
         }
         return new HashMap<>();
@@ -51,7 +51,7 @@ public class RedisDataStoreImpl implements DataStore<RedisDataInMemoryCache> {
         RedisDataInMemoryCache mapCache = inMemoryMapsCaches.get(map);
 
         if (mapCache == null) {
-            log.error("Error in reading from ingestion map:{}", map.getMapName());
+            log.error("Error in reading from in memory map cache:{}", map.getMapName());
             return null;
         } else {
             return mapCache.values();
@@ -69,7 +69,7 @@ public class RedisDataStoreImpl implements DataStore<RedisDataInMemoryCache> {
     }
 
     @Override
-    public void putCache(RedisMap cacheName, RedisDataInMemoryCache ingestionDataStoreCache) {
-        inMemoryMapsCaches.put(cacheName, ingestionDataStoreCache);
+    public void putCache(RedisMap cacheName, RedisDataInMemoryCache redisDataStoreCache) {
+        inMemoryMapsCaches.put(cacheName, redisDataStoreCache);
     }
 }
