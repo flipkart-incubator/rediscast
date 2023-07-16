@@ -2,10 +2,12 @@ package com.flipkart.ads.redis.v1.stream;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flipkart.ads.redis.v1.client.RedisReadOnlyClient;
+import com.flipkart.ads.redis.v1.config.processor.RedisEventProcessorConfig;
 import com.flipkart.ads.redis.v1.event.RedisDataStoreChangePropagator;
 import com.flipkart.ads.redis.v1.exceptions.RedisDataStoreChangePropagatorException;
 import com.flipkart.ads.redis.v1.exceptions.RedisDataStoreException;
 import com.flipkart.ads.redis.v1.model.RedisEntity;
+import com.flipkart.ads.redis.v1.model.RedisMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -29,14 +32,18 @@ public class RedisDataStoreCDCImpl implements RedisDataStoreCDC {
     private final Map<String, ScheduledFuture<?>> runningTasks = new ConcurrentHashMap<>();
     private final MetricRegistry metricRegistry;
     private final RedisReadOnlyClient redisReadOnlyClient;
+    private final Map<String, RedisEventProcessorConfig> mapNameToEventProcessorConfig;
 
     @Inject
     public RedisDataStoreCDCImpl(MetricRegistry metricRegistry,
                                  RedisReadOnlyClient redisReadOnlyClient,
-                                 @Named("redisCacheScheduler") ScheduledExecutorService executorService) {
+                                 @Named("redisCacheScheduler") ScheduledExecutorService executorService,
+                                 Map<RedisMap, RedisEventProcessorConfig> redisMapToEventProcessorConfig) {
         this.metricRegistry = metricRegistry;
         this.redisReadOnlyClient = redisReadOnlyClient;
         this.executorService = executorService;
+        this.mapNameToEventProcessorConfig = redisMapToEventProcessorConfig.entrySet().stream().collect(
+                Collectors.toMap(entry -> entry.getKey().getMapName(), Map.Entry::getValue));
     }
 
     @Override
@@ -50,7 +57,9 @@ public class RedisDataStoreCDCImpl implements RedisDataStoreCDC {
             validateAlreadyAttachedListener(mapName);
             log.error("Attaching listener for map name:{}", mapName);
             RedisStreamListener changeListener = new RedisStreamListenerImpl(metricRegistry, redisReadOnlyClient, mapName, true);
-            RedisStreamListenerTask changeListenerTask = new RedisStreamListenerTask(metricRegistry, mapName, changeListener, changePropagator);
+            boolean isParallelProcessingOnStreamBatchEnabled = mapNameToEventProcessorConfig.get(mapName).isParallelProcessingEnabledForUpdates();
+            RedisStreamListenerTask changeListenerTask = new RedisStreamListenerTask(metricRegistry, mapName, changeListener,
+                    changePropagator, isParallelProcessingOnStreamBatchEnabled);
             ScheduledFuture<?> scheduledFuture = executorService.scheduleWithFixedDelay(changeListenerTask, initialDelayMs,
                     frequencyMs, TimeUnit.MILLISECONDS);
             runningTasks.put(changeListener.getId(), scheduledFuture);

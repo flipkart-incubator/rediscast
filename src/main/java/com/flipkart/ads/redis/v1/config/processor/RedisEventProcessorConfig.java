@@ -14,4 +14,5 @@ public class RedisEventProcessorConfig {
     BootstrapConfig bootstrapConfig;
     LockConfig lockConfig;
     boolean localCopyRequired;
+    boolean isParallelProcessingEnabledForUpdates;
 }

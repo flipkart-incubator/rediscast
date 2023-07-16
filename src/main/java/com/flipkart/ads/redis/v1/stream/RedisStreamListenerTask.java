@@ -19,17 +19,21 @@ public class RedisStreamListenerTask implements Runnable {
     private final String mapName;
     private final RedisStreamListener changeListener;
     private final RedisDataStoreChangePropagator<String, Object> changePropagator;
+    private final boolean isParallelProcessingOnStreamBatchEnabled;
     private final Timer batchProcessEvent;
     private final Meter batchProcessExceptionMeter;
     private final Meter batchProcessThrowableMeter;
     private final Meter reportEventExceptionMeter;
     private RedisStreamListenerTask.RedisStreamListenerTaskState state;
 
-    public RedisStreamListenerTask(MetricRegistry metricRegistry, String mapName, RedisStreamListener changeListener, RedisDataStoreChangePropagator<String, Object> changePropagator) {
+    public RedisStreamListenerTask(MetricRegistry metricRegistry, String mapName, RedisStreamListener changeListener,
+                                   RedisDataStoreChangePropagator<String, Object> changePropagator,
+                                   boolean isParallelProcessingOnStreamBatchEnabled) {
         this.mapName = mapName;
         this.state = RedisStreamListenerTask.RedisStreamListenerTaskState.INITIALIZING;
         this.changeListener = changeListener;
         this.changePropagator = changePropagator;
+        this.isParallelProcessingOnStreamBatchEnabled = isParallelProcessingOnStreamBatchEnabled;
 
         this.batchProcessEvent = metricRegistry.timer(MetricRegistry.name(RedisStreamListenerTask.class, "processEvent", mapName));
         this.batchProcessExceptionMeter = metricRegistry.meter(MetricRegistry.name(RedisStreamListenerTask.class, "processEvent", "exception", mapName));
@@ -57,8 +61,6 @@ public class RedisStreamListenerTask implements Runnable {
                 // Consider latest event for a entity at a batch level
                 Map<String, List<StreamEvent<String, Object>>> uniqStreams = changeEvents.stream().collect(Collectors.groupingBy(RedisEntity::getKey));
 
-                // TODO: Make it as a config
-                boolean isParallelProcessingOnStreamBatchEnabled = true;
                 if (isParallelProcessingOnStreamBatchEnabled) {
                     log.info("Doing Parallel Stream on Data from Redis Stream Batch");
                     uniqStreams.values().parallelStream().forEach(e ->
@@ -67,7 +69,6 @@ public class RedisStreamListenerTask implements Runnable {
                                         try {
                                             reportEvent(r);
                                         } catch (Exception ex) {
-                                            // @Todo Revisit the eating of all the exceptions
                                             log.error("Exception occurred in batch: eating the exception for mapName: {} , event: {}", mapName, e);
                                             batchProcessExceptionMeter.mark();
                                         }
@@ -80,7 +81,6 @@ public class RedisStreamListenerTask implements Runnable {
                                         try {
                                             reportEvent(r);
                                         } catch (Exception ex) {
-                                            // @Todo Revisit the eating of all the exceptions
                                             log.error("Exception occurred in batch: eating the exception for mapName: {} , event: {}", mapName, e);
                                             batchProcessExceptionMeter.mark();
                                         }

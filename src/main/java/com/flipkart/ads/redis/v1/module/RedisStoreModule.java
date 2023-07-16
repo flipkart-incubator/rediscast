@@ -5,6 +5,7 @@ import com.codahale.metrics.InstrumentedThreadFactory;
 import com.codahale.metrics.MetricRegistry;
 import com.flipkart.ads.redis.v1.cache.RedisDataInMemoryCache;
 import com.flipkart.ads.redis.v1.client.*;
+import com.flipkart.ads.redis.v1.config.processor.RedisEventProcessorConfig;
 import com.flipkart.ads.redis.v1.datastore.DataStore;
 import com.flipkart.ads.redis.v1.event.RedisDataStoreChangePropagator;
 import com.flipkart.ads.redis.v1.handler.RedisStoreHandler;
@@ -62,9 +63,10 @@ public class RedisStoreModule extends AbstractModule {
     @Provides
     @Singleton
     public RedisDataStoreCDC getRedisCDCClient(MetricRegistry metricRegistry,
-                                                @Named("redis_read_only_client") RedisReadOnlyClient redisReadOnlyClient,
-                                                @Named("redisCacheScheduler") ScheduledExecutorService executorService) {
-        return new RedisDataStoreCDCImpl(metricRegistry, redisReadOnlyClient, executorService);
+                                               @Named("redis_read_only_client") RedisReadOnlyClient redisReadOnlyClient,
+                                               @Named("redisCacheScheduler") ScheduledExecutorService executorService,
+                                               Map<RedisMap, RedisEventProcessorConfig> redisEventProcessorConfigMap) {
+        return new RedisDataStoreCDCImpl(metricRegistry, redisReadOnlyClient, executorService, redisEventProcessorConfigMap);
     }
 
     @Provides

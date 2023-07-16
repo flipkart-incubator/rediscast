@@ -7,22 +7,19 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.flipkart.ads.redis.v1.exceptions.RedisDataStoreException;
-import com.flipkart.ads.redis.v1.model.RedisEntity;
 import com.flipkart.ads.redis.v1.exceptions.RedisDataTransformerException;
+import com.flipkart.ads.redis.v1.model.RedisEntity;
 import com.flipkart.ads.redis.v1.model.RedisMap;
 import com.flipkart.ads.redis.v1.transformers.RedisTransformer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.util.Pool;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -67,30 +64,6 @@ public abstract class AbstractRedisClient {
                 Collectors.toMap(entry -> entry.getKey().getMapName(), Map.Entry::getValue));
         this.jedisPool = jedisPool;
         this.metricRegistry = metricRegistry;
-    }
-
-    protected Object execRedisCommand(String command) {
-        try (Jedis resource = jedisPool.getResource()) {
-            return resource.eval(command);
-        } catch (Exception exp) {
-            log.error("Error in executing the given script: {}", exp.getMessage());
-            throw exp;
-        }
-    }
-
-    // TODO: this is not related to redis stream library. can be moved to application logic
-    public Map<String, String> getHashAll(String key) throws RedisDataStoreException {
-        try (Jedis resource = jedisPool.getResource()) {
-            Map<String, String> result = resource.hgetAll(key);
-            if (MapUtils.isEmpty(result)) {
-                return new HashMap<>();
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("Exception in getHashAll : hashName: {}, e: {}", key, e);
-            markExceptionMeter(this.getClass(), "getHashAll", key);
-            throw new RedisDataStoreException("Could not fetch data for Hash: " + key, e);
-        }
     }
 
     protected Object deserializeEntity(String type, String value) {
