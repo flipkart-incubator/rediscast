@@ -126,9 +126,15 @@ public abstract class AbstractRedisClient {
     @Getter
     @AllArgsConstructor
     public static class EntityStreamConfigs {
+        // map name
         final String name;
+        // Maximum number of events that can be fetched from redis in a single call
         final int count;
+        // Maximum amount of time in ms to wait for the records(max will be count) from redis.
+        // This can be used in conjunction with count to define the behaviour of poll call. Results will be returned from poll
+        // when either maximum number of records defined using count are found or the timeout defined by block is happened, which ever happens first
         final long block;
+        // Maximum number of events to retain in stream
         final long streamMaxLength;
     }
 }

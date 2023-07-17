@@ -2,9 +2,15 @@ package com.flipkart.ads.redis.v1.config.processor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * This class has the config required for bootstrap which is done while consumer initialisation
+ */
 public class BootstrapConfig {
+    // Core number of threads in the executor service
     private int corePoolSize = 10;
+    // Maximum number of threads in the executor service
     private int maxPoolSize = 50;
+    // Maximum number of events in one batch while bootstrapping
     private int batchSize = 50000;
 
     public BootstrapConfig(@JsonProperty("corePoolSize") int corePoolSize, @JsonProperty("maxPoolSize") int maxPoolSize, @JsonProperty("batchSize") int batchSize) {

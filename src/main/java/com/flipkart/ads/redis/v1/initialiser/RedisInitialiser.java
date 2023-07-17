@@ -54,7 +54,7 @@ public class RedisInitialiser {
         }
     }
 
-    //Adding synchronised to make this thread safe
+
     private void destroyLocalMapCaches() {
 
         if (isInitialised.get()) {
