@@ -1,26 +1,26 @@
-package com.flipkart.ads.redis.v1.examples.consumer.modules;
+package com.flipkart.ads.redis.consumer.modules;
 
+import com.flipkart.ads.redis.consumer.listener.SampleEntityListener;
+import com.flipkart.ads.redis.models.SampleRedisMap;
+import com.flipkart.ads.redis.transformers.SampleEntityTransformer;
 import com.flipkart.ads.redis.v1.client.AbstractRedisClient;
 import com.flipkart.ads.redis.v1.config.locks.StripedMultiLockConfig;
 import com.flipkart.ads.redis.v1.config.processor.BootstrapConfig;
 import com.flipkart.ads.redis.v1.config.processor.RedisEventProcessorConfig;
 import com.flipkart.ads.redis.v1.event.RedisDataStoreChangePropagator;
-import com.flipkart.ads.redis.v1.examples.consumer.listener.SampleEntityListener;
-import com.flipkart.ads.redis.v1.examples.models.SampleRedisMap;
-import com.flipkart.ads.redis.v1.examples.transformers.SampleEntityTransformer;
 import com.flipkart.ads.redis.v1.model.RedisMap;
 import com.flipkart.ads.redis.v1.pool.RedisPoolConfig;
 import com.flipkart.ads.redis.v1.transformers.RedisTransformer;
 import com.google.common.collect.Sets;
+import com.google.inject.Module;
 import com.google.inject.*;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.Arrays.asList;
 
 public class ConsumerModule implements Module {
     @Override
@@ -69,7 +69,7 @@ public class ConsumerModule implements Module {
     @Provides
     @Singleton
     private List<RedisMap> provideRedisMaps() {
-        return asList(SampleRedisMap.SAMPLE_MAP_ONE, SampleRedisMap.SAMPLE_MAP_TWO);
+        return Arrays.asList(SampleRedisMap.SAMPLE_MAP_ONE, SampleRedisMap.SAMPLE_MAP_TWO);
     }
 
     // Provide the stream config

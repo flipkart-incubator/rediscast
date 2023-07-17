@@ -1,13 +1,14 @@
-package com.flipkart.ads.redis.v1.examples.producer.modules;
+package com.flipkart.ads.redis.producer.modules;
 
-import com.flipkart.ads.redis.v1.examples.models.SampleRedisMap;
-import com.flipkart.ads.redis.v1.examples.transformers.SampleEntityTransformer;
+import com.flipkart.ads.redis.models.SampleRedisMap;
+import com.flipkart.ads.redis.transformers.SampleEntityTransformer;
 import com.flipkart.ads.redis.v1.client.AbstractRedisClient;
 import com.flipkart.ads.redis.v1.config.processor.RedisEventProcessorConfig;
 import com.flipkart.ads.redis.v1.model.RedisMap;
 import com.flipkart.ads.redis.v1.pool.RedisPoolConfig;
 import com.flipkart.ads.redis.v1.transformers.RedisTransformer;
 import com.google.common.collect.Sets;
+import com.google.inject.Module;
 import com.google.inject.*;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;

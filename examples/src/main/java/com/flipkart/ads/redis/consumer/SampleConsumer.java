@@ -1,4 +1,4 @@
-package com.flipkart.ads.redis.v1.examples.consumer;
+package com.flipkart.ads.redis.consumer;
 
 import com.flipkart.ads.redis.v1.initialiser.RedisInitialiser;
 

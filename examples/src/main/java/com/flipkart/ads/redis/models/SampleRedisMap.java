@@ -1,4 +1,4 @@
-package com.flipkart.ads.redis.v1.examples.models;
+package com.flipkart.ads.redis.models;
 
 import com.flipkart.ads.redis.v1.model.RedisMap;
 import lombok.AllArgsConstructor;

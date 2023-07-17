@@ -9,6 +9,6 @@ Consumer will periodically poll redis streams for new events. If there are new e
 
 
 ## Getting Started
-For starting producer, refer to this [doc](src/main/java/com/flipkart/ads/redis/v1/examples/producer/README.md)
+For starting producer, refer to this [doc](examples/src/main/java/com/flipkart/ads/redis/producer/README.md)
 
-For starting consumer, refer to this [doc](src/main/java/com/flipkart/ads/redis/v1/examples/consumer/README.md)
+For starting consumer, refer to this [doc](examples/src/main/java/com/flipkart/ads/redis/consumer/README.md)

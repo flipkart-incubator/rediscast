@@ -1,7 +1,7 @@
-package com.flipkart.ads.redis.v1.examples.producer;
+package com.flipkart.ads.redis.producer;
 
+import com.flipkart.ads.redis.models.SampleEntity;
 import com.flipkart.ads.redis.v1.client.RedisWriteOnlyClient;
-import com.flipkart.ads.redis.v1.examples.models.SampleEntity;
 import com.flipkart.ads.redis.v1.exceptions.RedisWriteSynchronizationException;
 import com.flipkart.ads.redis.v1.model.RedisEntity;
 import com.flipkart.ads.redis.v1.pool.RedisSynchronizationConfig;

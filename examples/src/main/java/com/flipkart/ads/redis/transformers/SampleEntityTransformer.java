@@ -1,7 +1,7 @@
-package com.flipkart.ads.redis.v1.examples.transformers;
+package com.flipkart.ads.redis.transformers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.ads.redis.v1.examples.models.SampleEntity;
+import com.flipkart.ads.redis.models.SampleEntity;
 import com.flipkart.ads.redis.v1.exceptions.RedisDataTransformerException;
 import com.flipkart.ads.redis.v1.transformers.RedisTransformer;
 import lombok.NoArgsConstructor;
